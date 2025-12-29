@@ -1,0 +1,1 @@
+export const IP_SERVER_BACKEND = 'https://sysapi.scankool.com/api/v1/';

@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import api from '../api/api';
+import apiPublic from '../api/apiPublic';
 
 export default function Register() {
   const nav = useNavigation();
@@ -45,8 +47,8 @@ export default function Register() {
 
       console.log("Sending:", body);
 
-      const res = await axios.post(
-        "https://sysapi.scankool.com/api/v1/register",
+      const res = await apiPublic.post(
+        "/register",
         body
       );
 
