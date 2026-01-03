@@ -37,29 +37,43 @@ export default function Register() {
 
     try {
       // Préparation du body demandé par l'API
+      const timestamp = Date.now();
       const body = {
-        username: restaurant.toLowerCase().replace(/\s+/g, ''),
+        username: `${restaurant.toLowerCase().replace(/\s+/g, '')}_${timestamp}`,
         email: `${manager}@gmail.com`,
         password: password,
         first_name: manager,
         last_name: restaurant
       };
 
-      console.log("Sending:", body);
+console.log(body);
+
 
       const res = await apiPublic.post(
         "/register",
         body
       );
 
-      console.log("API SUCCESS:", res.data);
+
 
       alert("Compte créé avec succès !");
       nav.navigate("Login");
 
     } catch (e) {
       console.log("API ERROR:", e);
-      setError("Erreur lors de l'inscription");
+      if (e.response) {
+        console.log("Response status:", e.response.status);
+        console.log("Response data:", e.response.data);
+        if (e.response.status === 500) {
+          setError("Erreur serveur interne. Veuillez réessayer plus tard.");
+        } else if (e.response.status === 400) {
+          setError("Données invalides. Vérifiez vos informations.");
+        } else {
+          setError("Erreur lors de l'inscription: " + (e.response.data?.message || e.message));
+        }
+      } else {
+        setError("Erreur de connexion. Vérifiez votre connexion internet.");
+      }
     }
 
     setLoading(false);

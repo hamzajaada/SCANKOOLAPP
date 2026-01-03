@@ -53,6 +53,7 @@ export default function ProfileSettingsScreen() {
     logo: null,
   });
   const [profileImage, setProfileImage] = useState(null);
+  const [logoImage, setLogoImage] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -65,6 +66,59 @@ export default function ProfileSettingsScreen() {
       setProfileImage(user.logo_url || user.image_url);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfileData();
+    }
+  }, [user?.id]);
+
+  const fetchProfileData = async () => {
+    try {
+      const response = await apiPrivate.get(`profiles/getProfile/${user.id}/`);
+      const profile = response.data[0];
+
+      // Set profile data
+      setProfileData({
+        id: profile.user.id,
+        name: profile.display_name || `${profile.user.first_name} ${profile.user.last_name}`.trim(),
+        email: profile.user.email,
+        phone: profile.phone,
+        role: profile.role,
+        currency: profile.currency,
+      });
+
+      // Set branding data
+      setBrandingData({
+        project_name: profile.project_name,
+        description: profile.description[selectedLanguage] || profile.description.fr || '',
+        address: profile.address,
+        primaryColor: profile.color,
+        secondaryColor: user?.secondaryColor || '#333333',
+      });
+
+      // Set social links
+      setSocialLinks({
+        website: profile.website,
+        facebook: profile.facebook,
+        instagram: profile.instagram,
+        tiktok: profile.tiktok,
+        link_google_map: profile.link_google_map,
+        trip_advisor: profile.trip_advisor,
+      });
+
+      // Set language
+      setSelectedLanguage(profile.lang);
+
+      // Set profile image
+      setProfileImage(profile.logo || profile.image);
+      setLogoImage(profile.logo);
+
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+      Alert.alert('Error', 'Failed to load profile data');
+    }
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -131,10 +185,8 @@ export default function ProfileSettingsScreen() {
       // Add method override
       formData.append("_method", "put");
 
-      console.log("FormData contents:");
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
+
+    
 
       const response = await apiPrivate.put("user", formData, {
         headers: {
@@ -166,6 +218,10 @@ export default function ProfileSettingsScreen() {
         lang: selectedLanguage,
       });
 
+      // Update local state for immediate display
+      setProfileImage(image || logo);
+      setLogoImage(logo);
+
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
       console.error("Erreur lors de la mise à jour :", error);
@@ -191,15 +247,22 @@ export default function ProfileSettingsScreen() {
         {/* Profile Image Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Image de profil</Text>
-          <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
-            {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.profileImage} />
-            ) : (
-              <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderText}>Sélectionner une image</Text>
+          <View style={styles.imageContainer}>
+            <TouchableOpacity style={styles.imageWrapper} onPress={pickImage}>
+              {profileImage ? (
+                <Image source={{ uri: profileImage }} style={styles.profileImage} />
+              ) : (
+                <View style={styles.placeholderImage}>
+                  <Text style={styles.placeholderText}>Sélectionner une image</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            {logoImage && (
+              <View style={styles.logoWrapper}>
+                <Image source={{ uri: logoImage }} style={styles.logoImage} />
               </View>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* Preferences Section */}
@@ -248,6 +311,32 @@ export default function ProfileSettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Marque</Text>
 
+          <Text style={styles.label}>Nom du projet</Text>
+          <TextInput
+            style={styles.input}
+            value={brandingData.project_name}
+            onChangeText={(text) => setBrandingData({ ...brandingData, project_name: text })}
+            placeholder="Nom de votre projet"
+          />
+
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={styles.input}
+            value={brandingData.description}
+            onChangeText={(text) => setBrandingData({ ...brandingData, description: text })}
+            placeholder="Description de votre projet"
+            multiline
+          />
+
+          <Text style={styles.label}>Adresse</Text>
+          <TextInput
+            style={styles.input}
+            value={brandingData.address}
+            onChangeText={(text) => setBrandingData({ ...brandingData, address: text })}
+            placeholder="Votre adresse"
+            multiline
+          />
+
           <Text style={styles.label}>Couleur principale</Text>
           <TextInput
             style={styles.input}
@@ -293,15 +382,6 @@ export default function ProfileSettingsScreen() {
             onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
             placeholder="+212 6XX XXX XXX"
             keyboardType="phone-pad"
-          />
-
-          <Text style={styles.label}>Adresse</Text>
-          <TextInput
-            style={styles.input}
-            value={profileData.address}
-            onChangeText={(text) => setProfileData({ ...profileData, address: text })}
-            placeholder="Votre adresse"
-            multiline
           />
         </View>
 

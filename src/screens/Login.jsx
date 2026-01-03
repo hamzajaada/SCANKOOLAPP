@@ -43,7 +43,7 @@ export default function Login() {
      
 
       const { access, refresh } = loginRes.data;
-      console.log("accex token :"+access);
+    
       
 
       // 2️⃣ SAVE TOKENS

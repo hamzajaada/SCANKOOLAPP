@@ -21,8 +21,7 @@ const readSecureStore = async () => {
   const user = await SecureStore.getItemAsync('user');
   const token = await SecureStore.getItemAsync('token');
 
-  console.log('USER SecureStore:', user);
-  console.log('TOKEN SecureStore:', token);
+
 };
 
 

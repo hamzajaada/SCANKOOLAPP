@@ -17,7 +17,7 @@ export default function MenuBar() {
   const navigation = useNavigation();
   const { user, setUser } = useContext(UserContext);
   const [menuVisible, setMenuVisible] = useState(false);
-   console.log(user);
+
    const projectname =  user?.project_name;
    
 
