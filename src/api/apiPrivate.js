@@ -39,4 +39,15 @@ apiPrivate.interceptors.response.use(
   }
 );
 
+// Set auth token function
+export const setAuthToken = (token) => {
+  if (token) {
+    SecureStore.setItem("access", token);
+    apiPrivate.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    SecureStore.removeItem("access");
+    delete apiPrivate.defaults.headers.common.Authorization;
+  }
+};
+
 export default apiPrivate;

@@ -35,6 +35,9 @@ export default function Login() {
 
     try {
      
+      console.log(username );
+      console.log(password);
+      
       const loginRes = await apiPublic.post("login", {
         username,
         password,
@@ -57,6 +60,7 @@ export default function Login() {
 
       const me = meRes.data.results?.[0] || meRes.data;
       const userId = me?.user?.id;
+console.log(userId);
 
       if (!userId) {
         throw new Error("User ID not found");
@@ -90,6 +94,9 @@ export default function Login() {
         currency: profileData.currency,
         lang: profileData.lang,
       });
+
+      
+      
 
       // 6️⃣ NAVIGATE
       navigation.replace("Dashboard"); // ou Dashboard

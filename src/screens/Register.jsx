@@ -11,7 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import api from '../api/api';
 import apiPublic from '../api/apiPublic';
-
+import apiPrivate from '../api/apiPrivate';
+import { setAuthToken } from '../api/apiPrivate';
 export default function Register() {
   const nav = useNavigation();
 
@@ -36,29 +37,39 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // Préparation du body demandé par l'API
-      const timestamp = Date.now();
+    
       const body = {
-        username: `${restaurant.toLowerCase().replace(/\s+/g, '')}_${timestamp}`,
+        username: restaurant,
         email: `${manager}@gmail.com`,
         password: password,
         first_name: manager,
         last_name: restaurant
       };
 
-console.log(body);
+    console.log(body);
 
 
-      const res = await apiPublic.post(
+      const res = await apiPrivate.post(
         "/register",
         body
       );
+      console.log("token:");
+      
+       console.log(res.data.access);
+         setAuthToken(res.data.access);
+       
 
+      // Create a new menu after successful registration
+      const newMenu = {
+        title: "menugene",
+        description: "null",
+        is_active: true,
+      };
 
+      await apiPrivate.post("menu/", newMenu);
 
       alert("Compte créé avec succès !");
       nav.navigate("Login");
-
     } catch (e) {
       console.log("API ERROR:", e);
       if (e.response) {

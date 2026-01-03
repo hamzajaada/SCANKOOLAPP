@@ -79,6 +79,7 @@ const { user } = useContext(UserContext);
 
 const USER_ID = user?.id;
 
+console.log(USER_ID);
 
   /* ================= FETCH ================= */
 
@@ -90,6 +91,8 @@ const USER_ID = user?.id;
 
     const results = res.data.results || [];
 
+    console.log(results);
+    
  
     setMenus(results);
 
