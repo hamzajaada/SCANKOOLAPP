@@ -82,6 +82,11 @@ console.log(userId);
         throw new Error("Profile not found");
       }
 
+      console.log("profile data");
+
+    console.log(profileData);
+    
+
       // 5️⃣ SAVE USER IN CONTEXT
       setUser({
         id: userId,

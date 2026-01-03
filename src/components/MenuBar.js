@@ -18,9 +18,10 @@ export default function MenuBar() {
   const { user, setUser } = useContext(UserContext);
   const [menuVisible, setMenuVisible] = useState(false);
 
+
    const projectname =  user?.project_name;
    
-
+console.log(user);
   /* ================= LOGOUT ================= */
 
   const handleLogout = async () => {
@@ -97,6 +98,8 @@ export default function MenuBar() {
               label="Visualiser Votre Menu"
               onPress={() => {
                 setMenuVisible(false);
+                console.log(user);
+                
                 Linking.openURL(`https://www.scankool.com/Client/Menu/${projectname}`);
               }}
             />

@@ -11,8 +11,12 @@ export function UserProvider({ children }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
+        console.log(storedUser);
+        
         const storedUser = await SecureStore.getItemAsync('user');
-
+        console.log("stored user");
+        
+      console.log(storedUser);
         if (storedUser) {
           let parsedUser = JSON.parse(storedUser);
 
