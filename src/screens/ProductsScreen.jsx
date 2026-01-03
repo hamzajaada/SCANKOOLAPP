@@ -21,7 +21,9 @@ import * as ImagePicker from "expo-image-picker";
 import MenuBar from "../components/MenuBar";
 import api from "../api/api";
 import apiPublic from "../api/apiPublic";
+import apiPrivate from "../api/apiPrivate";
 import { UserContext } from "../context/UserContext";
+import ProductAddModal from "../components/products/ProductAddModal";
 
 /* ================= HELPERS ================= */
 
@@ -45,23 +47,56 @@ export default function ProductsScreen() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [loadingTranslation, setLoadingTranslation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [newProduct, setNewProduct] = useState({
-    name: { fr: "" },
-    description: { fr: "" },
-    price: "",
-    categoryId: null,
-    image: null,
+  const [productName, setProductName] = useState({
+    fr: "",
+    en: "",
+    ar: "",
+    es: "",
+    it: "",
+    zh: "",
+    ja: "",
+    de: "",
+    pt: "",
+    ru: "",
+    nl: "",
   });
+
+  const [productDescription, setProductDescription] = useState({
+    fr: "",
+    en: "",
+    ar: "",
+    es: "",
+    it: "",
+    zh: "",
+    ja: "",
+    de: "",
+    pt: "",
+    ru: "",
+    nl: "",
+  });
+
+  const [productPrice, setProductPrice] = useState("");
+  const [productCategoryId, setProductCategoryId] = useState(null);
+  const [productImage, setProductImage] = useState(null);
 
   /* ================= FETCH ================= */
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      console.log("Fetching products for user:", USER_ID);
+      
       const res = await apiPublic.get(
         `product/getProductsByUser/${USER_ID}/`
       );
+
+      console.log("Products API response:", {
+        status: res.status,
+        count: res.data.results?.length || 0
+      });
 
       const mapped = (res.data.results || []).map((p) => ({
         id: p.id,
@@ -72,9 +107,11 @@ export default function ProductsScreen() {
         image: p.image,
       }));
 
+      console.log("Mapped products:", mapped.length);
       setProducts(mapped);
     } catch (e) {
-      console.log("FETCH PRODUCTS ERROR", e.message);
+      console.error("FETCH PRODUCTS ERROR", e.message, e.response?.data);
+      Alert.alert("Erreur", "Impossible de charger les produits");
     } finally {
       setLoading(false);
     }
@@ -82,25 +119,61 @@ export default function ProductsScreen() {
 
   const fetchCategories = async () => {
     try {
-      const res = await apiPublic.get(
-        `categories/getCategoriesByUser/${USER_ID}/`
-      );
+      console.log("Fetching categories...");
+      
+      let allCategories = [];
+      let currentPage = 1;
+      const perPage = 10;
 
-      const mapped = (res.data.results || []).map((c) => ({
-        id: c.id,
-        name: pickFR(c.name),
-      }));
+      // Pagination pour récupérer toutes les catégories
+      while (true) {
+        const res = await apiPublic.get(
+          `categories/getCategoriesByUser/${USER_ID}/?page=${currentPage}`
+        );
+        const pageResults = res.data.results || [];
+        console.log(`Page ${currentPage}: ${pageResults.length} catégories`);
+        
+        allCategories = [...allCategories, ...pageResults];
 
-      setCategories(mapped);
+        // Vérifier si nous avons atteint la dernière page
+        if (currentPage >= (res.data.last_page || 1) || pageResults.length === 0) {
+          break;
+        }
+        currentPage++;
+      }
+
+      // Transformation des données - CORRECTION ICI
+      const transformedCategories = allCategories.map((category) => {
+        // S'assurer que name est traité correctement
+        const categoryName = category.name || {};
+        
+        console.log("Category data:", {
+          id: category.id,
+          name: categoryName,
+          displayName: pickFR(categoryName)
+        });
+        
+        return {
+          id: category.id,
+          name: categoryName, // Objet multilingue
+          displayName: pickFR(categoryName), // Chaîne pour l'affichage
+        };
+      });
+
+      console.log("Total categories:", transformedCategories.length);
+      setCategories(transformedCategories);
     } catch (e) {
-      console.log("FETCH CATEGORIES ERROR", e.message);
+      console.error("FETCH CATEGORIES ERROR", e.message, e.response?.data);
+      Alert.alert("Erreur", "Impossible de charger les catégories");
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
+    if (USER_ID) {
+      fetchProducts();
+      fetchCategories();
+    }
+  }, [USER_ID]);
 
   /* ================= FILTER ================= */
 
@@ -111,71 +184,147 @@ export default function ProductsScreen() {
     );
   }, [products, selectedCategoryId]);
 
-  /* ================= IMAGE ================= */
+  /* ================= TRANSLATION ================= */
 
-  const handleImagePick = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert("Permission requise");
+  const fetchTranslations = async () => {
+    if (!productName.fr.trim()) {
+      Alert.alert("Erreur", "Veuillez d'abord saisir un nom en français");
       return;
     }
 
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
+    setLoadingTranslation(true);
+    try {
+      const response = await apiPrivate.post("product/translate_product/", {
+        product_name_fr: productName.fr.trim(),
+        product_ingredients_fr: productDescription.fr.trim() || "",
+      });
 
-    if (!res.canceled) {
-      setNewProduct({ ...newProduct, image: res.assets[0] });
+      const translations = response.data;
+
+      // Update product name
+      setProductName((prev) => ({
+        ...prev,
+        fr: translations.name.fr || productName.fr,
+        en: translations.name.en || "",
+        ar: translations.name.ar || "",
+        es: translations.name.es || "",
+        it: translations.name.it || "",
+        zh: translations.name.zh || "",
+        ja: translations.name.ja || "",
+        de: translations.name.de || "",
+        pt: translations.name.pt || "",
+        ru: translations.name.ru || "",
+        nl: translations.name.nl || "",
+      }));
+
+      // Update product description
+      setProductDescription((prev) => ({
+        ...prev,
+        fr: translations.description.fr || productDescription.fr || "",
+        en: translations.description.en || "",
+        ar: translations.description.ar || "",
+        es: translations.description.es || "",
+        it: translations.description.it || "",
+        zh: translations.description.zh || "",
+        ja: translations.description.ja || "",
+        de: translations.description.de || "",
+        pt: translations.description.pt || "",
+        ru: translations.description.ru || "",
+        nl: translations.description.nl || "",
+      }));
+
+      Alert.alert("Succès", "Traduction terminée");
+    } catch (error) {
+      console.error("Error fetching translations:", error);
+      Alert.alert("Erreur", "Erreur lors de la traduction. Veuillez réessayer.");
+    } finally {
+      setLoadingTranslation(false);
     }
   };
 
   /* ================= ADD ================= */
 
   const addProduct = async () => {
-    if (
-      !newProduct.name.fr ||
-      !newProduct.price ||
-      !newProduct.categoryId
-    ) {
-      Alert.alert("Tous les champs sont obligatoires");
+    if (!productName.fr || !productPrice || !productCategoryId) {
+      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires");
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const fd = new FormData();
-      fd.append("name", JSON.stringify(newProduct.name));
-      fd.append("description", JSON.stringify(newProduct.description));
-      fd.append("price", String(newProduct.price));
-      fd.append("category", newProduct.categoryId);
+      fd.append("name", JSON.stringify(productName || {}));
+      fd.append("description", JSON.stringify(productDescription || {}));
+      fd.append("price", String(productPrice ?? 0));
+      fd.append("category", productCategoryId);
       fd.append("is_active", "true");
 
-      if (newProduct.image) {
+      if (productImage) {
         fd.append("image_file", {
-          uri: newProduct.image.uri,
+          uri: productImage.uri,
           type: "image/jpeg",
           name: "product.jpg",
         });
       }
 
-      await api.post("product/", fd, {
+      const response = await api.post("product/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      fetchProducts();
-      setShowAddModal(false);
-      setNewProduct({
-        name: { fr: "" },
-        description: { fr: "" },
-        price: "",
-        categoryId: null,
-        image: null,
+      console.log("Produit ajouté :", response.data);
+
+      // Reset form
+      setProductName({
+        fr: "",
+        en: "",
+        ar: "",
+        es: "",
+        it: "",
+        zh: "",
+        ja: "",
+        de: "",
+        pt: "",
+        ru: "",
+        nl: "",
       });
+      setProductDescription({
+        fr: "",
+        en: "",
+        ar: "",
+        es: "",
+        it: "",
+        zh: "",
+        ja: "",
+        de: "",
+        pt: "",
+        ru: "",
+        nl: "",
+      });
+      setProductPrice("");
+      setProductCategoryId(null);
+      setProductImage(null);
+
+      if (response.status === 201 || response.status === 200) {
+        fetchProducts();
+        setShowAddModal(false);
+        Alert.alert("Succès", "Produit ajouté avec succès");
+      }
       Keyboard.dismiss();
     } catch (error) {
-      console.log("ADD PRODUCT ERROR", error.message);
-      Alert.alert("Erreur lors de l'ajout");
+      console.error("Create product failed:", error.response?.status, error.response?.data || error.message);
+      Alert.alert("Erreur", "Erreur lors de l'ajout du produit");
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleAddCategory = () => {
+    setShowAddModal(false);
+    Alert.alert(
+      "Ajouter une catégorie",
+      "Veuillez d'abord ajouter une catégorie depuis l'écran de gestion des catégories",
+      [{ text: "OK" }]
+    );
   };
 
   /* ================= RENDER ================= */
@@ -184,6 +333,7 @@ export default function ProductsScreen() {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#FF7A00" />
+        <Text style={styles.loadingText}>Chargement des produits...</Text>
       </View>
     );
   }
@@ -204,13 +354,18 @@ export default function ProductsScreen() {
               <TouchableOpacity
                 style={styles.addBtn}
                 onPress={() => setShowAddModal(true)}
+                disabled={loading}
               >
                 <Text style={styles.addText}>+ Ajouter</Text>
               </TouchableOpacity>
             </View>
 
             {/* CATEGORIES FILTER */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoryScroll}
+            >
               <CategoryChip
                 label="Toutes"
                 active={!selectedCategoryId}
@@ -219,14 +374,14 @@ export default function ProductsScreen() {
               {categories.map((c) => (
                 <CategoryChip
                   key={c.id}
-                  label={c.name}
+                  label={c.displayName || `Catégorie ${c.id}`}
                   active={selectedCategoryId === c.id}
                   onPress={() => setSelectedCategoryId(c.id)}
                 />
               ))}
             </ScrollView>
 
-            {/* PRODUCTS */}
+            {/* PRODUCTS LIST */}
             <FlatList
               data={filteredProducts}
               keyExtractor={(i) => String(i.id)}
@@ -239,103 +394,96 @@ export default function ProductsScreen() {
                         : require("../../assets/scankool.png")
                     }
                     style={styles.image}
+                    defaultSource={require("../../assets/scankool.png")}
                   />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.sub}>{item.categoryName}</Text>
-                    <Text style={styles.price}>{item.price} MAD</Text>
+                  <View style={styles.cardContent}>
+                    <Text style={styles.name} numberOfLines={1}>
+                      {item.name || "Sans nom"}
+                    </Text>
+                    <Text style={styles.sub} numberOfLines={1}>
+                      {item.categoryName || "Sans catégorie"}
+                    </Text>
+                    <Text style={styles.price}>
+                      {item.price ? `${item.price} MAD` : "Prix non défini"}
+                    </Text>
                   </View>
                 </View>
               )}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyTitle}>Aucun produit</Text>
+                  <Text style={styles.emptyText}>
+                    {selectedCategoryId 
+                      ? "Aucun produit dans cette catégorie"
+                      : "Commencez par ajouter votre premier produit"
+                    }
+                  </Text>
+                </View>
+              }
+              refreshing={loading}
+              onRefresh={() => {
+                fetchProducts();
+                fetchCategories();
+              }}
             />
           </View>
 
           {/* ADD MODAL */}
-          <Modal visible={showAddModal} transparent animationType="fade">
-            <TouchableWithoutFeedback onPress={() => setShowAddModal(false)}>
-              <View style={styles.overlay}>
-                <View style={styles.sheet}>
-                  <Text style={styles.sheetTitle}>Ajouter un produit</Text>
-
-                  <ScrollView>
-                    <Text style={styles.label}>Nom</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={newProduct.name.fr}
-                      onChangeText={(t) =>
-                        setNewProduct({
-                          ...newProduct,
-                          name: { fr: t },
-                        })
-                      }
-                    />
-
-                    <Text style={styles.label}>Prix</Text>
-                    <TextInput
-                      style={styles.input}
-                      keyboardType="numeric"
-                      value={newProduct.price}
-                      onChangeText={(t) =>
-                        setNewProduct({ ...newProduct, price: t })
-                      }
-                    />
-
-                    <Text style={styles.label}>Catégorie</Text>
-                    <TouchableOpacity
-                      style={styles.input}
-                      onPress={() => setShowCategoryPicker(true)}
-                    >
-                      <Text>
-                        {categories.find(
-                          (c) => c.id === newProduct.categoryId
-                        )?.name || "Sélectionner une catégorie"}
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.imageBtn}
-                      onPress={handleImagePick}
-                    >
-                      <Text>
-                        {newProduct.image
-                          ? "Image sélectionnée"
-                          : "Choisir une image"}
-                      </Text>
-                    </TouchableOpacity>
-                  </ScrollView>
-
-                  <ActionButton label="Ajouter" onPress={addProduct} />
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
-
-          {/* CATEGORY PICKER */}
-          <Modal visible={showCategoryPicker} transparent animationType="fade">
-            <TouchableWithoutFeedback
-              onPress={() => setShowCategoryPicker(false)}
-            >
-              <View style={styles.overlay}>
-                <View style={styles.picker}>
-                  {categories.map((c) => (
-                    <TouchableOpacity
-                      key={c.id}
-                      style={styles.pickerItem}
-                      onPress={() => {
-                        setNewProduct({
-                          ...newProduct,
-                          categoryId: c.id,
-                        });
-                        setShowCategoryPicker(false);
-                      }}
-                    >
-                      <Text>{c.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
+          <ProductAddModal
+            visible={showAddModal}
+            productName={productName}
+            setProductName={setProductName}
+            productDescription={productDescription}
+            setProductDescription={setProductDescription}
+            productPrice={productPrice}
+            setProductPrice={setProductPrice}
+            productCategoryId={productCategoryId}
+            setProductCategoryId={setProductCategoryId}
+            productImage={productImage}
+            setProductImage={setProductImage}
+            categories={categories.map(c => ({
+              id: c.id,
+              name: c.displayName || `Catégorie ${c.id}`
+            }))}
+            loadingTranslation={loadingTranslation}
+            onTranslate={fetchTranslations}
+            onAdd={addProduct}
+            onClose={() => {
+              setShowAddModal(false);
+              // Reset form on close
+              setProductName({
+                fr: "",
+                en: "",
+                ar: "",
+                es: "",
+                it: "",
+                zh: "",
+                ja: "",
+                de: "",
+                pt: "",
+                ru: "",
+                nl: "",
+              });
+              setProductDescription({
+                fr: "",
+                en: "",
+                ar: "",
+                es: "",
+                it: "",
+                zh: "",
+                ja: "",
+                de: "",
+                pt: "",
+                ru: "",
+                nl: "",
+              });
+              setProductPrice("");
+              setProductCategoryId(null);
+              setProductImage(null);
+            }}
+            onAddCategory={handleAddCategory}
+            isSubmitting={isSubmitting}
+          />
         </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
@@ -348,113 +496,139 @@ const CategoryChip = ({ label, active, onPress }) => (
   <TouchableOpacity
     onPress={onPress}
     style={[styles.chip, active && styles.chipActive]}
+    activeOpacity={0.7}
   >
-    <Text style={[styles.chipText, active && styles.chipTextActive]}>
+    <Text 
+      style={[styles.chipText, active && styles.chipTextActive]}
+      numberOfLines={1}
+    >
       {label}
     </Text>
-  </TouchableOpacity>
-);
-
-const ActionButton = ({ label, onPress }) => (
-  <TouchableOpacity style={styles.actionBtn} onPress={onPress}>
-    <Text style={styles.actionText}>{label}</Text>
   </TouchableOpacity>
 );
 
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 15, backgroundColor: "#f5f6f8" },
-  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
-
+  container: { 
+    flex: 1, 
+    padding: 15, 
+    backgroundColor: "#f5f6f8" 
+  },
+  loader: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#f5f6f8",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#666",
+    fontSize: 14,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    alignItems: "center",
+    marginBottom: 15,
   },
-  title: { fontSize: 22, fontWeight: "700" },
-
+  title: { 
+    fontSize: 22, 
+    fontWeight: "700",
+    color: "#333",
+  },
   addBtn: {
     backgroundColor: "#FF7A00",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 10,
+    minWidth: 100,
+    alignItems: "center",
   },
-  addText: { color: "#fff", fontWeight: "700" },
-
+  addText: { 
+    color: "#fff", 
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  categoryScroll: {
+    marginBottom: 15,
+    paddingVertical: 5,
+  },
   chip: {
     backgroundColor: "#e5e7eb",
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     height: 36,
     borderRadius: 18,
     marginRight: 8,
     justifyContent: "center",
     alignItems: "center",
+    minWidth: 80,
   },
-  chipActive: { backgroundColor: "#FF7A00" },
-  chipText: { fontSize: 14, fontWeight: "500", color: "#374151" },
-  chipTextActive: { color: "#fff" },
-
+  chipActive: { 
+    backgroundColor: "#FF7A00" 
+  },
+  chipText: { 
+    fontSize: 14, 
+    fontWeight: "500", 
+    color: "#374151" 
+  },
+  chipTextActive: { 
+    color: "#fff" 
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
+    marginBottom: 10,
     flexDirection: "row",
-    marginBottom: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  image: { width: 60, height: 60, borderRadius: 10, marginRight: 10 },
-
-  name: { fontWeight: "700", fontSize: 16 },
-  sub: { color: "#777", fontSize: 13 },
-  price: { marginTop: 4, fontWeight: "600" },
-
-  overlay: {
+  image: { 
+    width: 60, 
+    height: 60, 
+    borderRadius: 10, 
+    marginRight: 12,
+    backgroundColor: "#f5f6f8",
+  },
+  cardContent: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  name: { 
+    fontWeight: "700", 
+    fontSize: 16,
+    color: "#333",
+    marginBottom: 2,
+  },
+  sub: { 
+    color: "#777", 
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  price: { 
+    fontWeight: "600",
+    color: "#FF7A00",
+    fontSize: 15,
+  },
+  emptyContainer: {
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
+    paddingVertical: 50,
   },
-  sheet: {
-    backgroundColor: "#fff",
-    padding: 25,
-    borderRadius: 20,
-    width: "90%",
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#777",
+    marginBottom: 8,
   },
-
-  label: { fontWeight: "600", marginBottom: 5 },
-  input: {
-    backgroundColor: "#f3f4f6",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-
-  imageBtn: {
-    backgroundColor: "#e5e7eb",
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-
-  picker: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    width: "80%",
-  },
-  pickerItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
-  },
-
-  actionBtn: {
-    backgroundColor: "#FF7A00",
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  actionText: {
-    color: "#fff",
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
     textAlign: "center",
-    fontWeight: "700",
+    maxWidth: 300,
   },
 });

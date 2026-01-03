@@ -34,20 +34,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-     
-      console.log(username );
-      console.log(password);
-      
       const loginRes = await apiPublic.post("login", {
         username,
         password,
       });
 
-     
-
       const { access, refresh } = loginRes.data;
-    
-      
 
       // 2️⃣ SAVE TOKENS
       await SecureStore.setItemAsync("token", access);
@@ -60,7 +52,7 @@ export default function Login() {
 
       const me = meRes.data.results?.[0] || meRes.data;
       const userId = me?.user?.id;
-console.log(userId);
+  
 
       if (!userId) {
         throw new Error("User ID not found");
@@ -82,11 +74,6 @@ console.log(userId);
         throw new Error("Profile not found");
       }
 
-      console.log("profile data");
-
-    console.log(profileData);
-    
-
       // 5️⃣ SAVE USER IN CONTEXT
       setUser({
         id: userId,
@@ -95,13 +82,21 @@ console.log(userId);
         phone: profileData.phone || "",
         role: profileData.user?.role || "admin_project",
         logo_url: profileData.logo,
+        image_url: profileData.image,
         project_name: profileData.project_name,
         currency: profileData.currency,
         lang: profileData.lang,
+        website: profileData.website,
+        description: profileData.description,
+        address: profileData.address,
+        facebook: profileData.facebook,
+        instagram: profileData.instagram,
+        tiktok: profileData.tiktok,
+        lang: profileData.lang,
+        link_google_map: profileData.link_google_map,
+        trip_advisor: profileData.trip_advisor,
+        project_name_slug: profileData.project_name_slug,
       });
-
-      
-      
 
       // 6️⃣ NAVIGATE
       navigation.replace("Dashboard"); // ou Dashboard

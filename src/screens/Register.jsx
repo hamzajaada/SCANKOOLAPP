@@ -45,12 +45,11 @@ export default function Register() {
         last_name: restaurant,
       };
 
-      console.log(body);
-
+   
       const res = await apiPrivate.post("/register", body);
-      console.log("token:");
+  
 
-      console.log(res.data.access);
+   
       setAuthToken(res.data.access);
 
       // Create a new menu after successful registration
@@ -67,8 +66,7 @@ export default function Register() {
     } catch (e) {
       console.log("API ERROR:", e);
       if (e.response) {
-        console.log("Response status:", e.response.status);
-        console.log("Response data:", e.response.data);
+  
         if (e.response.status === 500) {
           setError("Erreur serveur interne. Veuillez réessayer plus tard.");
         } else if (e.response.status === 400) {
