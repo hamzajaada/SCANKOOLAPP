@@ -101,7 +101,7 @@ export default function Login() {
       // 6️⃣ NAVIGATE
       navigation.replace("Dashboard"); // ou Dashboard
     } catch (err) {
-      console.log("LOGIN ERROR:", err);
+      //console.log("LOGIN ERROR:", err);
       setError("Identifiants incorrects.");
     }
 

@@ -64,7 +64,7 @@ export default function Register() {
       alert("Compte créé avec succès !");
       nav.navigate("Login");
     } catch (e) {
-      console.log("API ERROR:", e);
+      //console.log("API ERROR:", e);
       if (e.response) {
   
         if (e.response.status === 500) {

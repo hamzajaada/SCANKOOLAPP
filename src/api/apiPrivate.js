@@ -30,7 +30,7 @@ apiPrivate.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      console.log('401 Unauthorized → logout needed');
+      //console.log('401 Unauthorized → logout needed');
       // Ici tu peux :
       // - clear SecureStore
       // - reset navigation vers Login

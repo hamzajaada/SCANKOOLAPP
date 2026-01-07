@@ -57,7 +57,7 @@ export default function MenuBar() {
         });
       }
     } catch (error) {
-      console.log("LOGOUT API ERROR:", error?.response || error.message);
+      //console.log("LOGOUT API ERROR:", error?.response || error.message);
     } finally {
       await SecureStore.deleteItemAsync("token");
       await SecureStore.deleteItemAsync("refresh");
@@ -67,7 +67,7 @@ export default function MenuBar() {
   };
 
   const goTo = (screen) => {
-    console.log("Navigating to:", screen);
+    //console.log("Navigating to:", screen);
     setMenuVisible(false);
     navigation.navigate(screen);
   };

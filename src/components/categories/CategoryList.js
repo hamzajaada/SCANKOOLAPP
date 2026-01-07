@@ -10,7 +10,7 @@ import {
 
 const CategoryList = ({ categories, onSelectCategory, loading }) => {
   const renderCategoryItem = ({ item }) => {
-    // console.log("Rendering category item:", item); // Vérifiez chaque item
+    // //console.log("Rendering category item:", item); // Vérifiez chaque item
     
     return (
       <TouchableOpacity

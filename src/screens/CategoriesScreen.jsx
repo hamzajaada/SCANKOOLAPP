@@ -97,13 +97,13 @@ export default function CategoryScreen() {
         setSelectedMenuId(results[0].id);
       }
     } catch (error) {
-      console.log("FETCH MENUS ERROR", error.response?.data || error.message);
+      //console.log("FETCH MENUS ERROR", error.response?.data || error.message);
       alert("Erreur lors du chargement des menus");
     }
   };
 
   const fetchCategories = async () => {
-    console.log("Fetching categories...");
+    //console.log("Fetching categories...");
     
     try {
       setLoading(true);
@@ -112,7 +112,7 @@ export default function CategoryScreen() {
         `categories/getCategoriesByUser/${USER_ID}/`
       );
 
-      console.log("API Response:", res.data);
+      //console.log("API Response:", res.data);
       
       const mapped = (res.data.results || []).map((c) => {
         // Debug: Voir la structure de chaque catégorie
@@ -144,11 +144,11 @@ export default function CategoryScreen() {
         };
       });
 
-      console.log("Mapped categories:", mapped);
+      //console.log("Mapped categories:", mapped);
       setCategories(mapped);
       
     } catch (e) {
-      console.log("FETCH CATEGORIES ERROR:", e.message, e.response?.data);
+      //console.log("FETCH CATEGORIES ERROR:", e.message, e.response?.data);
       alert("Erreur lors du chargement des catégories");
     } finally {
       setLoading(false);
@@ -176,7 +176,7 @@ export default function CategoryScreen() {
       setSelectedCategory(null);
       alert(`Catégorie ${newStatus ? 'activée' : 'désactivée'} avec succès`);
     } catch (error) {
-      console.log("TOGGLE STATUS ERROR", error.response?.data || error.message);
+      //console.log("TOGGLE STATUS ERROR", error.response?.data || error.message);
       alert("Erreur lors de la modification du statut");
     }
   };
@@ -188,7 +188,7 @@ export default function CategoryScreen() {
       setSelectedCategory(null);
       alert("Catégorie supprimée avec succès");
     } catch (error) {
-      console.log("DELETE CATEGORY ERROR", error.response?.data || error.message);
+      //console.log("DELETE CATEGORY ERROR", error.response?.data || error.message);
       alert("Erreur lors de la suppression de la catégorie");
     }
   };
@@ -304,10 +304,10 @@ export default function CategoryScreen() {
         menu: selectedMenuId,
       };
 
-      console.log("Sending payload:", payload);
+      //console.log("Sending payload:", payload);
       
       const res = await apiPrivate.post("/categories/", payload);
-      console.log("API Response:", res.data);
+      //console.log("API Response:", res.data);
       
       const created = res.data;
 
@@ -321,7 +321,7 @@ export default function CategoryScreen() {
         menuId: created.menu,
       };
 
-      console.log("New category object:", newCategory);
+      //console.log("New category object:", newCategory);
       
       // Ajouter à la liste
       setCategories((prev) => [newCategory, ...prev]);
@@ -348,13 +348,13 @@ export default function CategoryScreen() {
       fetchCategories();
       
     } catch (error) {
-      console.log("ADD CATEGORY ERROR:", error.response?.data || error.message);
+      //console.log("ADD CATEGORY ERROR:", error.response?.data || error.message);
       alert(`Erreur: ${error.response?.data?.message || "Échec de l'ajout"}`);
     }
   };
 
   const saveEditCategory = async () => {
-    console.log("Saving edit category:", editCategory);
+    //console.log("Saving edit category:", editCategory);
     
     if (!editCategory) {
       alert("Aucune catégorie à modifier");
@@ -382,7 +382,7 @@ export default function CategoryScreen() {
         menu: selectedMenuId,
       };
 
-      console.log("Sending update payload:", payload);
+      //console.log("Sending update payload:", payload);
 
       const res = await apiPrivate.put(`/categories/${editCategory.id}/`, payload);
       const updated = res.data;
@@ -411,7 +411,7 @@ export default function CategoryScreen() {
       fetchCategories();
       
     } catch (error) {
-      console.log("UPDATE CATEGORY ERROR", error.response?.data || error.message);
+      //console.log("UPDATE CATEGORY ERROR", error.response?.data || error.message);
       alert("Erreur lors de la modification");
     }
   };
@@ -460,7 +460,7 @@ export default function CategoryScreen() {
             category={selectedCategory}
             onClose={() => setSelectedCategory(null)}
             onEdit={() => {
-              console.log("Opening edit for category:", selectedCategory);
+              //console.log("Opening edit for category:", selectedCategory);
               
               // Préparer la catégorie pour l'édition
               const categoryToEdit = {
@@ -468,7 +468,7 @@ export default function CategoryScreen() {
                 name: normalizeName(selectedCategory.name),
               };
               
-              console.log("Category to edit:", categoryToEdit);
+              //console.log("Category to edit:", categoryToEdit);
               
               setEditCategory(categoryToEdit);
               setSelectedMenuId(selectedCategory.menuId);

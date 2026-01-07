@@ -53,8 +53,8 @@ const CategoryEditModal = ({
     return null;
   }
 
-  console.log("CategoryEditModal - editCategory:", editCategory);
-  console.log("CategoryEditModal - name type:", typeof editCategory.name);
+  //console.log("CategoryEditModal - editCategory:", editCategory);
+  //console.log("CategoryEditModal - name type:", typeof editCategory.name);
 
   // Fonction helper pour obtenir la valeur d'un nom de langue
   const getNameValue = (langKey) => {
@@ -95,7 +95,7 @@ const CategoryEditModal = ({
 
   // Fonction pour le bouton Enregistrer
   const handleSave = () => {
-    console.log("Save button clicked, final data:", editCategory);
+    //console.log("Save button clicked, final data:", editCategory);
     onSave();
   };
 
