@@ -105,13 +105,13 @@ const fetchProducts = async () => {
       status: p.is_active,
       image: p.image,
     }));
-// console.log("uszer id " , USER_ID);
+console.log("uszer id " , USER_ID);
 
-//     products.map(product => {
-//       console.log("ID: ", product.id);
-//   console.log("Name: ", product.name);
-//   console.log("Description:", product.description);
-// });
+    products.map(product => {
+      console.log("ID: ", product.id);
+  console.log("Name: ", product.name);
+  console.log("Description:", product.description);
+});
 
     setProducts(mapped);
   } catch (e) {
@@ -133,12 +133,10 @@ const fetchProducts = async () => {
       // Pagination pour récupérer toutes les catégories
       while (true) {
         const res = await apiPublic.get(
-          `categories/getCategoriesByUser/${USER_ID}/?page=${currentPage}`
+          `categories/getCategoriesByUser/${USER_ID}/`
         );
-        //console.log(  `categories/getCategoriesByUser/${USER_ID}/?page=${currentPage}`);
-        
         const pageResults = res.data.results || [];
-        //console.log(`Page ${currentPage}: ${pageResults.length} catégories`);
+        console.log(`Page ${currentPage}: ${pageResults.length} catégories`);
         
         allCategories = [...allCategories, ...pageResults];
 
