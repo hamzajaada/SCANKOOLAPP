@@ -734,6 +734,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
     paddingHorizontal: 15,
+    marginTop: 10 ,
   },
   title: { fontSize: 22, fontWeight: "700" },
   addBtn: {
