@@ -59,12 +59,14 @@ const ProductAddModal = ({
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+const result = await ImagePicker.launchImageLibraryAsync({
+  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  allowsEditing: true,
+  aspect: [1, 1],
+  quality: 0.8,
+});
+
+
 
     if (!result.canceled) {
       const asset = result.assets[0];
@@ -86,11 +88,20 @@ const ProductAddModal = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); onClose(); }}>
         <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
+             <TouchableOpacity
+      style={StyleSheet.absoluteFill}
+      activeOpacity={1}
+      onPress={() => {
+        Keyboard.dismiss();
+        onClose();
+      }}
+    />
             <View style={styles.sheet}>
-              <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ maxHeight: 500 }}
+                 showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        >
                 <Text style={styles.sheetTitle}>
                   Ajouter un produit
                 </Text>
@@ -256,9 +267,9 @@ const ProductAddModal = ({
                 </TouchableOpacity>
               </View>
             </View>
-          </TouchableWithoutFeedback>
+       
         </View>
-      </TouchableWithoutFeedback>
+     
     </Modal>
   );
 };
