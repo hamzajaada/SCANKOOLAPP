@@ -45,20 +45,29 @@ const fetchAll = async (relativeUrl) => {
   let url = relativeUrl;
   let allItems = [];
 
-  while (url) {
-    const res = await apiPrivate.get(url);
+  try {
+    while (url) {
+      const res = await apiPrivate.get(url);
 
-    const { items } = normalizeListResponse(res.data);
-    allItems.push(...items);
+      const { items } = normalizeListResponse(res.data);
+      allItems.push(...items);
 
-    // pagination DRF
-    if (res.data?.next) {
-      url = res.data.next.replace(
-        'https://syapi.scankool.com/api/v1/',
-        ''
-      );
-    } else {
-      url = null;
+      // pagination DRF
+      if (res.data?.next) {
+        url = res.data.next.replace(
+          'https://syapi.scankool.com/api/v1/',
+          ''
+        );
+      } else {
+        url = null;
+      }
+    }
+  } catch (error) {
+    console.error('Erreur dans fetchAll:', error.response?.status, error.response?.data || error.message);
+    // Si c'est une erreur 500 ou autre, on retourne ce qu'on a récupéré jusqu'à présent
+    // plutôt que de faire planter toute l'application
+    if (allItems.length === 0) {
+      throw error; // Si on n'a rien récupéré, on propage l'erreur
     }
   }
 
@@ -122,6 +131,16 @@ export default function DashboardUser() {
       );
     } catch (e) {
       console.error('Erreur produits :', e);
+      console.error('Détails de l\'erreur:', {
+        status: e.response?.status,
+        statusText: e.response?.statusText,
+        data: e.response?.data,
+        message: e.message,
+      });
+      // Réinitialiser les valeurs en cas d'erreur
+      setNbTotalProducts(0);
+      setNbInactiveProducts(0);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -134,7 +153,6 @@ export default function DashboardUser() {
       const res = await apiPrivate.get(
         `categories/getCategoriesByUser/${userId}/`
       );
-
 
       const { items } = normalizeListResponse(res.data);
 
@@ -156,6 +174,16 @@ export default function DashboardUser() {
       );
     } catch (e) {
       console.error('Erreur catégories :', e);
+      console.error('Détails de l\'erreur:', {
+        status: e.response?.status,
+        statusText: e.response?.statusText,
+        data: e.response?.data,
+        message: e.message,
+      });
+      // Réinitialiser les valeurs en cas d'erreur
+      setNbTotalCategories(0);
+      setNbInactiveCategories(0);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
