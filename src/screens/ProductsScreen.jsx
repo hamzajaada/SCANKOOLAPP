@@ -105,13 +105,13 @@ const fetchProducts = async () => {
       status: p.is_active,
       image: p.image,
     }));
-console.log("uszer id " , USER_ID);
+// console.log("uszer id " , USER_ID);
 
-    products.map(product => {
-      console.log("ID: ", product.id);
-  console.log("Name: ", product.name);
-  console.log("Description:", product.description);
-});
+//     products.map(product => {
+//       console.log("ID: ", product.id);
+//   console.log("Name: ", product.name);
+//   console.log("Description:", product.description);
+// });
 
     setProducts(mapped);
   } catch (e) {
@@ -230,6 +230,7 @@ console.log("uszer id " , USER_ID);
         pt: translations.description.pt || "",
         ru: translations.description.ru || "",
         nl: translations.description.nl || "",
+        
       }));
 
       Alert.alert("Succès", "Traduction terminée");
@@ -329,6 +330,7 @@ const addProduct = async () => {
     Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires");
     return;
   }
+console.log("helleo");
 
   setIsSubmitting(true);
   try {
@@ -363,11 +365,10 @@ const addProduct = async () => {
       image: productImage?.uri || null,
     };
     setProducts(prev => [newProduct, ...prev]);  // Prepend new product
-
+    console.log("hamza ", newProduct);
+    
     // 2. REFRESH FROM SERVER (background)
-    setTimeout(async () => {  // Delay to avoid race
-      await fetchProducts();
-    }, 500);
+    // await fetchProducts();
 
     // 3. Reset + close
     setProductName({ fr: "", en: "", ar: "", es: "", it: "", zh: "", ja: "", de: "", pt: "", ru: "", nl: "" });
